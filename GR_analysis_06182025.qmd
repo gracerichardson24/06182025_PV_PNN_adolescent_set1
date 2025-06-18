@@ -2,3 +2,54 @@
 title: "GR_analysis_06182025"
 format: html
 ---
+
+```{r}
+#| label: packages and data:
+
+#packages for statistical analysis
+if(!require(lsmeans)){install.packages("lsmeans")}
+if(!require(multcompView)){install.packages("multcompView")}
+if(!require(dplyr)){install.packages("dplyr")}
+if(!require(rcompanion)){install.packages("rcompanion")}
+if(!require(rcompanion)){install.packages("ggprism")}
+
+library(tidyverse)
+library(stringr)
+library(car)
+library(FSA)
+library(ggpubr)
+library(ggbeeswarm)
+library(ggprism)
+```
+
+```{r}
+#| label: reading in CSV files
+
+Image_data = read.csv("DATA/Summary_WT+KO.csv")
+```
+
+```{r}
+
+modelPV = lm(`Green.Puncta.Count` ~ Condition * Genotype * Side,
+           data = Image_data)
+summary(modelPV)
+
+Anova(modelPV,
+      type = "III")
+```
+
+```{r}
+modelWFA = lm(`Red.Puncta.Count` ~ Condition * Genotype * Side,
+           data = Image_data)
+summary(modelWFA)
+
+Anova(modelWFA,
+      type = "III")
+```
+
+```{r}
+Image_data |>
+  ggplot(aes(x = Genotype, y = Colocalized.Puncta.Count)) +
+  geom_col()
+  
+```
