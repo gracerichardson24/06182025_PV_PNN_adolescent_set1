@@ -53,3 +53,170 @@ Image_data |>
   geom_col()
   
 ```
+
+```{r}
+# Create summary data
+summary_df_WFA <- Image_data %>%
+  group_by(Condition, Genotype, Side) %>%
+  summarise(MeanCount = mean(Red.Puncta.Count, na.rm = TRUE), .groups = "drop") %>%
+  mutate(Group = paste(Condition, Genotype, Side, sep = "_"))
+
+# Add group label to raw data
+Image_data <- Image_data %>%
+  mutate(Group = paste(Condition, Genotype, Side, sep = "_"))
+
+# Plot
+ggplot() +
+  # Bar chart for group means
+  geom_col(data = summary_df_WFA, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.5) +
+
+  # Jitter for individual points
+  geom_jitter(data = Image_data, aes(x = Group, y = Red.Puncta.Count, color = Genotype),
+              width = 0.2, size = 2, alpha = 0.7) +
+
+  theme_minimal() +
+  xlab("Condition_Genotype_Side") +
+  ylab("Red Puncta Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+# Create summary data
+summary_df_PV <- Image_data %>%
+  group_by(Condition, Genotype, Side) %>%
+  summarise(MeanCount = mean(Green.Puncta.Count, na.rm = TRUE), .groups = "drop") %>%
+  mutate(Group = paste(Condition, Genotype, Side, sep = "_"))
+
+# Add group label to raw data
+Image_data <- Image_data %>%
+  mutate(Group = paste(Condition, Genotype, Side, sep = "_"))
+
+# Plot
+ggplot() +
+  # Bar chart for group means
+  geom_col(data = summary_df_PV, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.5) +
+
+  # Jitter for individual points
+  geom_jitter(data = Image_data, aes(x = Group, y = Green.Puncta.Count, color = Genotype),
+              width = 0.2, size = 2, alpha = 0.7) +
+
+  theme_minimal() +
+  xlab("Condition_Genotype_Side") +
+  ylab("Green Puncta Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+# Create summary data
+summary_df_coloc <- Image_data %>%
+  group_by(Condition, Genotype, Side) %>%
+  summarise(MeanCount = mean(Colocalized.Puncta.Count, na.rm = TRUE), .groups = "drop") %>%
+  mutate(Group = paste(Condition, Genotype, Side, sep = "_"))
+
+# Add group label to raw data
+Image_data <- Image_data %>%
+  mutate(Group = paste(Condition, Genotype, Side, sep = "_"))
+
+# Plot
+ggplot() +
+  # Bar chart for group means
+  geom_col(data = summary_df_coloc, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.5) +
+
+  # Jitter for individual points
+  geom_jitter(data = Image_data, aes(x = Group, y = Colocalized.Puncta.Count, color = Genotype),
+              width = 0.2, size = 2, alpha = 0.7) +
+
+  theme_minimal() +
+  xlab("Condition_Genotype_Side") +
+  ylab("Colocalized Puncta Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+library(dplyr)
+
+# Add a 'NotColocalized' column and calculate percentages
+Image_data <- Image_data %>%
+  mutate(
+    NotColocalized.Count = Green.Puncta.Count - Colocalized.Puncta.Count,
+    Colocalized.Percent = Colocalized.Puncta.Count / Green.Puncta.Count,
+    NotColocalized.Percent = NotColocalized.Count / Green.Puncta.Count,
+    Group = paste(Condition, Genotype, Side, sep = "_")
+  )
+
+plot_data <- Image_data %>%
+  select(Group, Colocalized.Percent, NotColocalized.Percent) %>%
+  pivot_longer(cols = c(Colocalized.Percent, NotColocalized.Percent),
+               names_to = "ColocStatus",
+               values_to = "Percent")
+
+library(ggplot2)
+
+ggplot(plot_data, aes(x = Group, y = Percent, fill = ColocStatus)) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  theme_minimal() +
+  xlab("Condition_Genotype_Side") +
+  ylab("Proportion of PV Puncta") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_fill_manual(values = c("Colocalized.Percent" = "#1f78b4", "NotColocalized.Percent" = "#a6cee3"),
+                    labels = c("Colocalized", "Not Colocalized"),
+                    name = "Colocalization Status")
+
+```
+
+```{r}
+library(dplyr)
+
+# Add a 'NotColocalized' column and calculate percentages
+Image_data <- Image_data %>%
+  mutate(
+    NotColocalized.Count = Red.Puncta.Count - Colocalized.Puncta.Count,
+    Colocalized.Percent = Colocalized.Puncta.Count / Red.Puncta.Count,
+    NotColocalized.Percent = NotColocalized.Count / Red.Puncta.Count,
+    Group = paste(Condition, Genotype, Side, sep = "_")
+  )
+
+plot_data <- Image_data %>%
+  select(Group, Colocalized.Percent, NotColocalized.Percent) %>%
+  pivot_longer(cols = c(Colocalized.Percent, NotColocalized.Percent),
+               names_to = "ColocStatus",
+               values_to = "Percent")
+
+library(ggplot2)
+
+ggplot(plot_data, aes(x = Group, y = Percent, fill = ColocStatus)) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  theme_minimal() +
+  xlab("Condition_Genotype_Side") +
+  ylab("Proportion of WFA Puncta") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_fill_manual(values = c("Colocalized.Percent" = "#1f78b4", "NotColocalized.Percent" = "#a6cee3"),
+                    labels = c("Colocalized", "Not Colocalized"),
+                    name = "Colocalization Status")
+```
+
+```{r}
+# Create summary data
+summary_df_coloc <- Image_data %>%
+  group_by(Condition, Genotype, Side) %>%
+  summarise(MeanCount = mean(Colocalized.Puncta.Count, na.rm = TRUE), .groups = "drop") %>%
+  mutate(Group = paste(Condition, Genotype, Side, sep = "_"))
+
+# Add group label to raw data
+Image_data <- Image_data %>%
+  mutate(Group = paste(Condition, Genotype, Side, sep = "_"))
+
+# Plot
+ggplot() +
+
+  # Jitter for individual points
+  geom_jitter(data = Image_data, aes(x = Group, y = Colocalized.Puncta.Count/Green.Puncta.Count, color = Genotype),
+              width = 0.2, size = 2, alpha = 0.7) +
+
+  theme_minimal() +
+  xlab("Condition_Genotype_Side") +
+  ylab("Colocalized Puncta Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
