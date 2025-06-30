@@ -20,6 +20,7 @@ library(FSA)
 library(ggpubr)
 library(ggbeeswarm)
 library(ggprism)
+library(ragg)
 ```
 
 ```{r}
@@ -54,6 +55,8 @@ Image_data |>
   
 ```
 
+#### WFA DATA
+
 ```{r}
 # Create summary data
 summary_df_WFA <- Image_data %>%
@@ -65,6 +68,17 @@ summary_df_WFA <- Image_data %>%
 Image_data <- Image_data %>%
   mutate(Group = paste(Condition, Genotype, Side, sep = "_"))
 
+label_map <- c(
+  "MD_KO_Contralateral" = "Contralateral",
+  "MD_KO_Ipsilateral" = "Ipsilateral",
+  "MD_WT_Contralateral" = "Contralateral",
+  "MD_WT_Ipsilateral" = "Ipsilateral",
+  "NR_KO_Contralateral" = "Contralateral",
+  "NR_KO_Ipsilateral" = "Ipsilateral",
+  "NR_WT_Contralateral" = "Contralateral",
+  "NR_WT_Ipsilateral" = "Ipsilateral"
+)
+
 # Plot
 ggplot() +
   # Bar chart for group means
@@ -75,10 +89,102 @@ ggplot() +
               width = 0.2, size = 2, alpha = 0.7) +
 
   theme_minimal() +
-  xlab("Condition_Genotype_Side") +
-  ylab("Red Puncta Count") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  xlab(" ") +
+  ylab("WFA+ Puncta Count") +
+  labs(title = "WFA+ puncta count in V1 across \n experimental conditions") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  scale_x_discrete(labels = label_map)
 ```
+
+```{r}
+
+summary_df_WFA <- Image_data %>%
+  group_by(Condition, Genotype, Side) %>%
+  summarise(MeanCount = mean(Red.Puncta.Count, na.rm = TRUE), .groups = "drop") %>%
+  mutate(Group = paste(Condition, Genotype, Side, sep = "_"))
+
+group_levels <- levels(factor(summary_df_WFA$Group))
+
+# Manually set bracket positions based on group order
+# Assuming order is: MD_KO_Contralateral, MD_KO_Ipsilateral, MD_WT_Contralateral, MD_WT_Ipsilateral,
+#                   NR_KO_Contralateral, NR_KO_Ipsilateral, NR_WT_Contralateral, NR_WT_Ipsilateral
+
+label_map <- c(
+  "MD_KO_Contralateral" = "Contralateral",
+  "MD_KO_Ipsilateral" = "Ipsilateral",
+  "MD_WT_Contralateral" = "Contralateral",
+  "MD_WT_Ipsilateral" = "Ipsilateral",
+  "NR_KO_Contralateral" = "Contralateral",
+  "NR_KO_Ipsilateral" = "Ipsilateral",
+  "NR_WT_Contralateral" = "Contralateral",
+  "NR_WT_Ipsilateral" = "Ipsilateral"
+)
+
+p <- ggplot() +
+  geom_col(data = summary_df_WFA, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.5) +
+  geom_jitter(data = Image_data, aes(x = Group, y = Red.Puncta.Count, color = Genotype),
+              width = 0.2, size = 2, alpha = 0.7) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  xlab(" ") +
+  ylab("WFA+ Puncta Count") +
+  labs(title = "WFA+ puncta count in V1 in monocular deprived (MD) \n and normal reared (NR) animals") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_discrete(labels = label_map) +
+  
+  # Bracket for "MD"
+  geom_segment(aes(x = 0.7, xend = 4.3, y = -1, yend = -1)) +  # horizontal line
+  geom_segment(aes(x = 0.7, xend = 0.7, y = -1, yend = -0.8)) +  # left vertical
+  geom_segment(aes(x = 4.3, xend = 4.3, y = -1, yend = -0.8)) +  # right vertical
+  annotate("text", x = 2.5, y = -1.2, label = "MD", size = 4) +  # label
+
+  # Bracket for "NR"
+  geom_segment(aes(x = 4.7, xend = 8.3, y = -1, yend = -1)) +
+  geom_segment(aes(x = 4.7, xend = 4.7, y = -1, yend = -0.8)) +
+  geom_segment(aes(x = 8.3, xend = 8.3, y = -1, yend = -0.8)) +
+  annotate("text", x = 6.5, y = -1.2, label = "NR", size = 4) +
+
+  # Expand plot space downward
+  coord_cartesian(ylim = c(-2, max(summary_df_WFA$MeanCount) * 2))
+
+p + coord_flip()
+
+ggsave(filename = "Ctnnd2_superplot_WFA_horizontal.png", width = 7, height = 7)
+
+```
+
+```{r}
+# Add a new 'Condition' column to both dataframes
+summary_df_WFA$Condition <- ifelse(grepl("^MD", summary_df_WFA$Group), "MD", "NR")
+Image_data$Condition <- ifelse(grepl("^MD", Image_data$Group), "MD", "NR")
+
+# Optional: Set factor levels if needed
+summary_df_WFA$Condition <- factor(summary_df_WFA$Condition, levels = c("MD", "NR"))
+Image_data$Condition <- factor(Image_data$Condition, levels = c("MD", "NR"))
+
+# Now plot
+p <- ggplot() +
+  geom_col(data = summary_df_WFA, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.5) +
+  geom_jitter(data = Image_data, aes(x = Group, y = Red.Puncta.Count, color = Genotype),
+              width = 0.2, size = 2, alpha = 0.7) +
+  theme_minimal() +
+  theme(legend.position = "right") +
+  xlab(" ") +
+  ylab("WFA+ Puncta Count") +
+  labs(title = "WFA+ puncta count in V1 in monocular deprived (MD) and \n normal reared (NR) animals") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_discrete(labels = label_map2) +
+  facet_wrap(~Condition, scales = "free_x") +  # <-- This separates MD and NR into different graphs
+  coord_cartesian(ylim = c(-2, max(summary_df_WFA$MeanCount) * 2))
+
+# Remove coord_flip() if you want vertical bars
+p
+
+ggsave(filename = "Ctnnd2_superplot_WFA_vertical.png", width = 7, height = 7)
+
+```
+
+#### PV DATA
 
 ```{r}
 # Create summary data
@@ -107,6 +213,94 @@ ggplot() +
 ```
 
 ```{r}
+summary_df_PV <- Image_data %>%
+  group_by(Condition, Genotype, Side) %>%
+  summarise(MeanCount = mean(Green.Puncta.Count, na.rm = TRUE), .groups = "drop") %>%
+  mutate(Group = paste(Condition, Genotype, Side, sep = "_"))
+
+group_levels <- levels(factor(summary_df_PV$Group))
+
+# Manually set bracket positions based on group order
+# Assuming order is: MD_KO_Contralateral, MD_KO_Ipsilateral, MD_WT_Contralateral, MD_WT_Ipsilateral,
+#                   NR_KO_Contralateral, NR_KO_Ipsilateral, NR_WT_Contralateral, NR_WT_Ipsilateral
+
+label_map <- c(
+  "MD_KO_Contralateral" = "Contralateral",
+  "MD_KO_Ipsilateral" = "Ipsilateral",
+  "MD_WT_Contralateral" = "Contralateral",
+  "MD_WT_Ipsilateral" = "Ipsilateral",
+  "NR_KO_Contralateral" = "Contralateral",
+  "NR_KO_Ipsilateral" = "Ipsilateral",
+  "NR_WT_Contralateral" = "Contralateral",
+  "NR_WT_Ipsilateral" = "Ipsilateral"
+)
+
+p <- ggplot() +
+  geom_col(data = summary_df_PV, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.5) +
+  geom_jitter(data = Image_data, aes(x = Group, y = Green.Puncta.Count, color = Genotype),
+              width = 0.2, size = 2, alpha = 0.7) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  xlab(" ") +
+  ylab("PV+ Puncta Count") +
+  labs(title = "PV+ puncta count in V1 in monocular deprived (MD) \n and normal reared (NR) animals") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_discrete(labels = label_map) +
+  
+  # Bracket for "MD"
+  geom_segment(aes(x = 0.7, xend = 4.3, y = -1, yend = -1)) +  # horizontal line
+  geom_segment(aes(x = 0.7, xend = 0.7, y = -1, yend = -0.8)) +  # left vertical
+  geom_segment(aes(x = 4.3, xend = 4.3, y = -1, yend = -0.8)) +  # right vertical
+  annotate("text", x = 2.5, y = -1.2, label = "MD", size = 4) +  # label
+
+  # Bracket for "NR"
+  geom_segment(aes(x = 4.7, xend = 8.3, y = -1, yend = -1)) +
+  geom_segment(aes(x = 4.7, xend = 4.7, y = -1, yend = -0.8)) +
+  geom_segment(aes(x = 8.3, xend = 8.3, y = -1, yend = -0.8)) +
+  annotate("text", x = 6.5, y = -1.2, label = "NR", size = 4) +
+
+  # Expand plot space downward
+  coord_cartesian(ylim = c(-2, max(summary_df_PV$MeanCount) * 2))
+
+p + coord_flip()
+
+ggsave(filename = "Ctnnd2_superplot_PV_horizontal.png", width = 7, height = 7)
+
+```
+
+```{r}
+# Add a new 'Condition' column to both dataframes
+summary_df_PV$Condition <- ifelse(grepl("^MD", summary_df_PV$Group), "MD", "NR")
+Image_data$Condition <- ifelse(grepl("^MD", Image_data$Group), "MD", "NR")
+
+# Optional: Set factor levels if needed
+summary_df_PV$Condition <- factor(summary_df_PV$Condition, levels = c("MD", "NR"))
+Image_data$Condition <- factor(Image_data$Condition, levels = c("MD", "NR"))
+
+# Now plot
+p <- ggplot() +
+  geom_col(data = summary_df_PV, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.5) +
+  geom_jitter(data = Image_data, aes(x = Group, y = Green.Puncta.Count, color = Genotype),
+              width = 0.2, size = 2, alpha = 0.7) +
+  theme_minimal() +
+  theme(legend.position = "right") +
+  xlab(" ") +
+  ylab("PV+ Puncta Count") +
+  labs(title = "PV+ puncta count in V1 in monocular deprived (MD) and \n normal reared (NR) animals") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_discrete(labels = label_map2) +
+  facet_wrap(~Condition, scales = "free_x") +  # <-- This separates MD and NR into different graphs
+  coord_cartesian(ylim = c(-2, max(summary_df_PV$MeanCount) * 2))
+
+# Remove coord_flip() if you want vertical bars
+p
+
+ggsave(filename = "Ctnnd2_superplot_PV_vertical.png", width = 7, height = 7)
+```
+
+#### Coloc Data
+
+```{r}
 # Create summary data
 summary_df_coloc <- Image_data %>%
   group_by(Condition, Genotype, Side) %>%
@@ -130,6 +324,91 @@ ggplot() +
   xlab("Condition_Genotype_Side") +
   ylab("Colocalized Puncta Count") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+summary_df_coloc <- Image_data %>%
+  group_by(Condition, Genotype, Side) %>%
+  summarise(MeanCount = mean(Colocalized.Puncta.Count, na.rm = TRUE), .groups = "drop") %>%
+  mutate(Group = paste(Condition, Genotype, Side, sep = "_"))
+
+group_levels <- levels(factor(summary_df_coloc$Group))
+
+# Manually set bracket positions based on group order
+# Assuming order is: MD_KO_Contralateral, MD_KO_Ipsilateral, MD_WT_Contralateral, MD_WT_Ipsilateral,
+#                   NR_KO_Contralateral, NR_KO_Ipsilateral, NR_WT_Contralateral, NR_WT_Ipsilateral
+
+label_map <- c(
+  "MD_KO_Contralateral" = "Contralateral",
+  "MD_KO_Ipsilateral" = "Ipsilateral",
+  "MD_WT_Contralateral" = "Contralateral",
+  "MD_WT_Ipsilateral" = "Ipsilateral",
+  "NR_KO_Contralateral" = "Contralateral",
+  "NR_KO_Ipsilateral" = "Ipsilateral",
+  "NR_WT_Contralateral" = "Contralateral",
+  "NR_WT_Ipsilateral" = "Ipsilateral"
+)
+
+p <- ggplot() +
+  geom_col(data = summary_df_coloc, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.5) +
+  geom_jitter(data = Image_data, aes(x = Group, y = Colocalized.Puncta.Count, color = Genotype),
+              width = 0.2, size = 2, alpha = 0.7) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  xlab(" ") +
+  ylab("Colocalized Puncta Count") +
+  labs(title = "Colocalized PV+ & WFA+ puncta count in V1 in monocular deprived (MD) \n and normal reared (NR) animals") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_discrete(labels = label_map) +
+  
+  # Bracket for "MD"
+  geom_segment(aes(x = 0.7, xend = 4.3, y = -1, yend = -1)) +  # horizontal line
+  geom_segment(aes(x = 0.7, xend = 0.7, y = -1, yend = -0.8)) +  # left vertical
+  geom_segment(aes(x = 4.3, xend = 4.3, y = -1, yend = -0.8)) +  # right vertical
+  annotate("text", x = 2.5, y = -1.2, label = "MD", size = 4) +  # label
+
+  # Bracket for "NR"
+  geom_segment(aes(x = 4.7, xend = 8.3, y = -1, yend = -1)) +
+  geom_segment(aes(x = 4.7, xend = 4.7, y = -1, yend = -0.8)) +
+  geom_segment(aes(x = 8.3, xend = 8.3, y = -1, yend = -0.8)) +
+  annotate("text", x = 6.5, y = -1.2, label = "NR", size = 4) +
+
+  # Expand plot space downward
+  coord_cartesian(ylim = c(-2, max(summary_df_coloc$MeanCount) * 2))
+
+p + coord_flip()
+
+ggsave(filename = "Ctnnd2_superplot_coloc_horizontal.png", width = 7, height = 7)
+```
+
+```{r}
+# Add a new 'Condition' column to both dataframes
+summary_df_coloc$Condition <- ifelse(grepl("^MD", summary_df_coloc$Group), "MD", "NR")
+Image_data$Condition <- ifelse(grepl("^MD", Image_data$Group), "MD", "NR")
+
+# Optional: Set factor levels if needed
+summary_df_coloc$Condition <- factor(summary_df_coloc$Condition, levels = c("MD", "NR"))
+Image_data$Condition <- factor(Image_data$Condition, levels = c("MD", "NR"))
+
+# Now plot
+p <- ggplot() +
+  geom_col(data = summary_df_coloc, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.5) +
+  geom_jitter(data = Image_data, aes(x = Group, y = Colocalized.Puncta.Count, color = Genotype),
+              width = 0.2, size = 2, alpha = 0.7) +
+  theme_minimal() +
+  theme(legend.position = "right") +
+  xlab(" ") +
+  ylab("Colocalized Puncta Count") +
+  labs(title = "Colocalized PV+ & WFA+ puncta count in V1 in monocular deprived (MD) and \n normal reared (NR) animals") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_discrete(labels = label_map2) +
+  facet_wrap(~Condition, scales = "free_x") +  # <-- This separates MD and NR into different graphs
+  coord_cartesian(ylim = c(-2, max(summary_df_coloc$MeanCount) * 2))
+
+# Remove coord_flip() if you want vertical bars
+p
+
+ggsave(filename = "Ctnnd2_superplot_coloc_vertical.png", width = 7, height = 7)
 ```
 
 ```{r}
@@ -171,7 +450,8 @@ library(dplyr)
 # Add a 'NotColocalized' column and calculate percentages
 Image_data <- Image_data %>%
   mutate(
-    NotColocalized.Count = Red.Puncta.Count - Colocalized.Puncta.Count,
+    NotColocalized.Count = 
+      .Puncta.Count - Colocalized.Puncta.Count,
     Colocalized.Percent = Colocalized.Puncta.Count / Red.Puncta.Count,
     NotColocalized.Percent = NotColocalized.Count / Red.Puncta.Count,
     Group = paste(Condition, Genotype, Side, sep = "_")
