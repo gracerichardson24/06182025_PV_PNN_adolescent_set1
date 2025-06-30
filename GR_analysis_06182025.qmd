@@ -132,20 +132,21 @@ p <- ggplot() +
   labs(title = "WFA+ puncta count in V1 in monocular deprived (MD) \n and normal reared (NR) animals") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   scale_x_discrete(labels = label_map) +
-  scale_y_continuous(limits = c(0, 140), expand = expansion(mult = c(0, 0.05)))+
-  
+  scale_y_continuous(limits = c(-20, 140), expand = expansion(mult = c(0, 0.05))) +  # extra room on left
+
   # Bracket for "MD"
-  geom_segment(aes(x = 0.7, xend = 4.3, y = -1, yend = -1)) +  # horizontal line
-  geom_segment(aes(x = 0.7, xend = 0.7, y = -1, yend = -0.8)) +  # left vertical
-  geom_segment(aes(x = 4.3, xend = 4.3, y = -1, yend = -0.8)) +  # right vertical
-  annotate("text", x = 2.5, y = -1.2, label = "MD", size = 4) +  # label
+  geom_segment(aes(x = 0.7, xend = 4.3, y = -5, yend = -5)) +     # horizontal bracket line
+  geom_segment(aes(x = 0.7, xend = 0.7, y = -5, yend = 0)) +      # left vertical line
+  geom_segment(aes(x = 4.3, xend = 4.3, y = -5, yend = 0)) +      # right vertical line
+  annotate("text", x = 2.5, y = -10, label = "MD", size = 4) +    # label
 
   # Bracket for "NR"
-  geom_segment(aes(x = 4.7, xend = 8.3, y = -1, yend = -1)) +
-  geom_segment(aes(x = 4.7, xend = 4.7, y = -1, yend = -0.8)) +
-  geom_segment(aes(x = 8.3, xend = 8.3, y = -1, yend = -0.8)) +
-  annotate("text", x = 6.5, y = -1.2, label = "NR", size = 4) 
+  geom_segment(aes(x = 4.7, xend = 8.3, y = -5, yend = -5)) +
+  geom_segment(aes(x = 4.7, xend = 4.7, y = -5, yend = 0)) +
+  geom_segment(aes(x = 8.3, xend = 8.3, y = -5, yend = 0)) +
+  annotate("text", x = 6.5, y = -10, label = "NR", size = 4)
 
+# Flip the plot
 p + coord_flip()
 
 ggsave(filename = "Ctnnd2_superplot_WFA_horizontal.png", width = 7, height = 7)
@@ -247,21 +248,24 @@ p <- ggplot() +
   labs(title = "PV+ puncta count in V1 in monocular deprived (MD) \n and normal reared (NR) animals") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   scale_x_discrete(labels = label_map) +
-  scale_y_continuous(limits = c(0, 140), expand = expansion(mult = c(0, 0.05)))+
-  
+  scale_y_continuous(limits = c(-20, 140), expand = expansion(mult = c(0, 0.05))) +  # extra room on left
+
   # Bracket for "MD"
-  geom_segment(aes(x = 0.7, xend = 4.3, y = -1, yend = -1)) +  # horizontal line
-  geom_segment(aes(x = 0.7, xend = 0.7, y = -1, yend = -0.8)) +  # left vertical
-  geom_segment(aes(x = 4.3, xend = 4.3, y = -1, yend = -0.8)) +  # right vertical
-  annotate("text", x = 2.5, y = -1.2, label = "MD", size = 4) +  # label
+  geom_segment(aes(x = 0.7, xend = 4.3, y = -5, yend = -5)) +     # horizontal bracket line
+  geom_segment(aes(x = 0.7, xend = 0.7, y = -5, yend = 0)) +      # left vertical line
+  geom_segment(aes(x = 4.3, xend = 4.3, y = -5, yend = 0)) +      # right vertical line
+  annotate("text", x = 2.5, y = -10, label = "MD", size = 4) +    # label
 
   # Bracket for "NR"
-  geom_segment(aes(x = 4.7, xend = 8.3, y = -1, yend = -1)) +
-  geom_segment(aes(x = 4.7, xend = 4.7, y = -1, yend = -0.8)) +
-  geom_segment(aes(x = 8.3, xend = 8.3, y = -1, yend = -0.8)) +
-  annotate("text", x = 6.5, y = -1.2, label = "NR", size = 4) 
+  geom_segment(aes(x = 4.7, xend = 8.3, y = -5, yend = -5)) +
+  geom_segment(aes(x = 4.7, xend = 4.7, y = -5, yend = 0)) +
+  geom_segment(aes(x = 8.3, xend = 8.3, y = -5, yend = 0)) +
+  annotate("text", x = 6.5, y = -10, label = "NR", size = 4)
 
+# Flip the plot
 p + coord_flip()
+
+
 
 ggsave(filename = "Ctnnd2_superplot_PV_horizontal.png", width = 7, height = 7)
 
@@ -361,21 +365,21 @@ p <- ggplot() +
   labs(title = "Colocalized PV+ & WFA+ puncta count in V1 in monocular deprived (MD) \n and normal reared (NR) animals") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   scale_x_discrete(labels = label_map) +
-  scale_y_continuous(limits = c(0, 140), expand = expansion(mult = c(0, 0.05)))+
-  
+  scale_y_continuous(limits = c(-20, 140), expand = expansion(mult = c(0, 0.05))) +  # extra room on left
+
   # Bracket for "MD"
-  geom_segment(aes(x = 0.7, xend = 4.3, y = -1, yend = -1)) +  # horizontal line
-  geom_segment(aes(x = 0.7, xend = 0.7, y = -1, yend = -0.8)) +  # left vertical
-  geom_segment(aes(x = 4.3, xend = 4.3, y = -1, yend = -0.8)) +  # right vertical
-  annotate("text", x = 2.5, y = -1.2, label = "MD", size = 4) +  # label
+  geom_segment(aes(x = 0.7, xend = 4.3, y = -5, yend = -5)) +     # horizontal bracket line
+  geom_segment(aes(x = 0.7, xend = 0.7, y = -5, yend = 0)) +      # left vertical line
+  geom_segment(aes(x = 4.3, xend = 4.3, y = -5, yend = 0)) +      # right vertical line
+  annotate("text", x = 2.5, y = -10, label = "MD", size = 4) +    # label
 
   # Bracket for "NR"
-  geom_segment(aes(x = 4.7, xend = 8.3, y = -1, yend = -1)) +
-  geom_segment(aes(x = 4.7, xend = 4.7, y = -1, yend = -0.8)) +
-  geom_segment(aes(x = 8.3, xend = 8.3, y = -1, yend = -0.8)) +
-  annotate("text", x = 6.5, y = -1.2, label = "NR", size = 4) 
+  geom_segment(aes(x = 4.7, xend = 8.3, y = -5, yend = -5)) +
+  geom_segment(aes(x = 4.7, xend = 4.7, y = -5, yend = 0)) +
+  geom_segment(aes(x = 8.3, xend = 8.3, y = -5, yend = 0)) +
+  annotate("text", x = 6.5, y = -10, label = "NR", size = 4)
 
-
+# Flip the plot
 p + coord_flip()
 
 ggsave(filename = "Ctnnd2_superplot_coloc_horizontal.png", width = 7, height = 7)
