@@ -3,3 +3,63 @@ title: "GRanalyis07112025(set2)"
 format: html
 ---
 
+```{r}
+#packages for statistical analysis
+if(!require(lsmeans)){install.packages("lsmeans")}
+if(!require(multcompView)){install.packages("multcompView")}
+if(!require(dplyr)){install.packages("dplyr")}
+if(!require(rcompanion)){install.packages("rcompanion")}
+if(!require(rcompanion)){install.packages("ggprism")}
+
+library(tidyverse)
+library(stringr)
+library(car)
+library(FSA)
+library(ggpubr)
+library(ggbeeswarm)
+library(ggprism)
+library(ragg)
+```
+
+```{r}
+#| label: reading in CSV file
+
+#| label: reading in CSV files
+
+Image_data2 = read.csv("DATA/(set2)Summary_WT+KO.csv")
+
+Image_data2 <- Image_data2 |>
+  mutate(Coloc.Puncta.Density = Colocalized.Puncta.Count/roiArea)
+
+Image_data2$Genotype <- as.factor(Image_data2$Genotype)
+Image_data2$Condition <- as.factor(Image_data2$Condition)
+```
+
+```{r}
+modelPV2 = lm(`Green.Puncta.Density` ~ Condition * Genotype,
+           data = Image_data2)
+summary(modelPV2)
+
+Anova(modelPV2,
+      type = "II")
+```
+
+```{r}
+modelWFA2 = lm(`Red.Punta.Density` ~ Condition * Genotype,
+           data = Image_data2)
+summary(modelWFA2)
+
+Anova(modelWFA2,
+      type = "II")
+```
+
+```{r}
+
+modelColoc2 = lm(`Coloc.Puncta.Density` ~ Condition * Genotype,
+           data = Image_data2)
+summary(modelColoc2)
+
+Anova(modelPV2,
+      type = "II")
+
+```
