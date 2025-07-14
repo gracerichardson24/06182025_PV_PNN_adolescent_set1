@@ -19,6 +19,11 @@ library(ggpubr)
 library(ggbeeswarm)
 library(ggprism)
 library(ragg)
+
+if(!require(psych)){install.packages("psych")}
+if(!require(FSA)){install.packages("FSA")}
+if(!require(lattice)){install.packages("lattice")}
+if(!require(lsr)){install.packages("lsr")}
 ```
 
 ```{r}
@@ -33,11 +38,18 @@ Image_data2 <- Image_data2 |>
 
 Image_data2$Genotype <- as.factor(Image_data2$Genotype)
 Image_data2$Condition <- as.factor(Image_data2$Condition)
+Image_data3 <- Image_data2 |>
+  group_by(Animal, Condition, Genotype) |>
+  summarise(
+    Red.Punta.Density = mean(Red.Punta.Density)*10000,
+    Green.Puncta.Density = mean(Green.Puncta.Density)*10000,
+    Coloc.Puncta.Density = mean(Coloc.Puncta.Density)*10000
+  )
 ```
 
 ```{r}
 modelPV2 = lm(`Green.Puncta.Density` ~ Condition * Genotype,
-           data = Image_data2)
+           data = Image_data3)
 summary(modelPV2)
 
 Anova(modelPV2,
@@ -46,8 +58,9 @@ Anova(modelPV2,
 
 ```{r}
 modelWFA2 = lm(`Red.Punta.Density` ~ Condition * Genotype,
-           data = Image_data2)
+           data = Image_data3)
 summary(modelWFA2)
+
 
 Anova(modelWFA2,
       type = "II")
@@ -62,4 +75,155 @@ summary(modelColoc2)
 Anova(modelPV2,
       type = "II")
 
+```
+
+```{r}
+t.test(Red.Punta.Density ~ Genotype,
+       data = Image_data3)
+
+```
+
+```{r}
+
+summary_df_PV <- Image_data3 %>%
+  group_by(Condition, Genotype) %>%
+  summarise(
+    MeanCount = mean(Green.Puncta.Density, na.rm = TRUE),
+    SEM = sd(Green.Puncta.Density, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  ) %>%
+  mutate(Group = paste(Condition, Genotype, sep = "_"))
+
+# Add group label to raw data
+Image_data3 <- Image_data3 %>%
+  mutate(Group = paste(Condition, Genotype, sep = "_"))
+
+# Plot
+ggplot() +
+  # Bar chart for group means
+  geom_col(data = summary_df_PV, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.5) +
+  geom_errorbar(
+  data = summary_df_PV,
+  aes(x = Group, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+  width = 0.2,
+  color = "black"
+)+
+
+  # Jitter for individual points
+  geom_jitter(data = Image_data3, aes(x = Group, y = Green.Puncta.Density, color = Animal),
+              width = 0.2, size = 2, alpha = 0.7) +
+
+  theme_minimal() +
+  xlab(" ") +
+  ylab("PV+ Puncta Density") +
+  labs(title = "PV+ puncta count in V1 across \n experimental conditions") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  scale_x_discrete(labels = label_map)
+```
+
+```{r}
+summary_df_WFA <- Image_data3 %>%
+  group_by(Condition, Genotype) %>%
+  summarise(
+    MeanCount = mean(Red.Punta.Density, na.rm = TRUE),
+    SEM = sd(Red.Punta.Density, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  ) %>%
+  mutate(Group = paste(Condition, Genotype, sep = "_"))
+
+# Add group label to raw data
+Image_data3 <- Image_data3 %>%
+  mutate(Group = paste(Condition, Genotype, sep = "_"))
+
+# Plot
+ggplot() +
+  # Bar chart for group means
+  geom_col(data = summary_df_WFA, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.5) +
+  geom_errorbar(
+  data = summary_df_WFA,
+  aes(x = Group, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+  width = 0.2,
+  color = "black"
+)+
+
+  # Jitter for individual points
+  geom_jitter(data = Image_data3, aes(x = Group, y = Red.Punta.Density, color = Animal),
+              width = 0.2, size = 2, alpha = 0.7) +
+
+  theme_minimal() +
+  xlab(" ") +
+  ylab("WFA+ Puncta Density") +
+  labs(title = "WFA+ puncta count in V1 across \n experimental conditions") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  scale_x_discrete(labels = label_map)
+```
+
+```{r}
+summary_df_WFA <- Image_data3 %>%
+  group_by(Genotype) %>%
+  summarise(
+    MeanCount = mean(Red.Punta.Density, na.rm = TRUE),
+    SEM = sd(Red.Punta.Density, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  )
+
+# Plot
+ggplot() +
+  # Bar chart for group means
+  geom_col(data = summary_df_WFA, aes(x = Genotype, y = MeanCount, fill = Genotype), alpha = 0.5) +
+  geom_errorbar(
+  data = summary_df_WFA,
+  aes(x = Genotype, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+  width = 0.2,
+  color = "black"
+)+
+
+  # Jitter for individual points
+  geom_jitter(data = Image_data3, aes(x = Genotype, y = Red.Punta.Density, color = Animal),
+              width = 0.2, size = 2, alpha = 0.7) +
+
+  theme_minimal() +
+  xlab(" ") +
+  ylab("WFA+ Puncta Density") +
+  labs(title = "WFA+ puncta count in V1 across \n experimental conditions") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  scale_x_discrete(labels = label_map)
+```
+
+```{r}
+summary_df_Coloc <- Image_data3 %>%
+  group_by(Condition, Genotype) %>%
+  summarise(
+    MeanCount = mean(Coloc.Puncta.Density, na.rm = TRUE),
+    SEM = sd(Coloc.Puncta.Density, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  ) %>%
+  mutate(Group = paste(Condition, Genotype, sep = "_"))
+
+# Add group label to raw data
+Image_data3 <- Image_data3 %>%
+  mutate(Group = paste(Condition, Genotype, sep = "_"))
+
+# Plot
+ggplot() +
+  # Bar chart for group means
+  geom_col(data = summary_df_Coloc, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.5) +
+  geom_errorbar(
+  data = summary_df_Coloc,
+  aes(x = Group, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+  width = 0.2,
+  color = "black"
+)+
+
+  # Jitter for individual points
+  geom_jitter(data = Image_data3, aes(x = Group, y = Coloc.Puncta.Density, color = Genotype),
+              width = 0.2, size = 
+                2, alpha = 0.7) +
+
+  theme_minimal() +
+  xlab(" ") +
+  ylab("Double+ Puncta Density") +
+  labs(title = "Double+ puncta count in V1 across \n experimental conditions") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  scale_x_discrete(labels = label_map)
 ```
