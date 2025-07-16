@@ -34,7 +34,13 @@ if(!require(lsr)){install.packages("lsr")}
 Image_data2 = read.csv("DATA/(set2)Summary_WT+KO.csv")
 
 Image_data2 <- Image_data2 |>
-  mutate(Coloc.Puncta.Density = Colocalized.Puncta.Count/roiArea)
+  mutate(
+    Coloc.Puncta.Density = Colocalized.Puncta.Count/roiArea,
+    roiArea = roiArea/0.77281681,
+    Green.Puncta.Density = 100*(Green.Puncta.Count/roiArea),
+    Red.Punta.Density = 100*(Red.Puncta.Count/roiArea),
+    Coloc.Puncta.Density = 100* (Colocalized.Puncta.Count/roiArea)
+    )
 
 Image_data2$Genotype <- as.factor(Image_data2$Genotype)
 Image_data2$Condition <- as.factor(Image_data2$Condition)
@@ -43,7 +49,9 @@ Image_data3 <- Image_data2 |>
   summarise(
     Red.Punta.Density = mean(Red.Punta.Density)*10000,
     Green.Puncta.Density = mean(Green.Puncta.Density)*10000,
-    Coloc.Puncta.Density = mean(Coloc.Puncta.Density)*10000
+    Coloc.Puncta.Density = mean(Coloc.Puncta.Density)*10000,
+    coloc_percent = mean(coloc_percent),
+    not_coloc_percent = mean(not_coloc_percent)
   )
 ```
 
@@ -57,6 +65,19 @@ Anova(modelPV2,
 ```
 
 ```{r}
+leastsquarepv = lsmeans(modelPV2,
+                      "Genotype",
+                      adjust="tukey")
+
+leastsquarepv
+
+leastsquarepv2 = lsmeans(modelPV2,
+                      pairwise ~ Condition:Genotype,
+                      adjust="tukey")
+leastsquarepv2
+```
+
+```{r}
 modelWFA2 = lm(`Red.Punta.Density` ~ Condition * Genotype,
            data = Image_data3)
 summary(modelWFA2)
@@ -64,6 +85,22 @@ summary(modelWFA2)
 
 Anova(modelWFA2,
       type = "II")
+```
+
+```{r}
+```
+
+```{r}
+leastsquarewfa = lsmeans(modelWFA2,
+                      "Genotype",
+                      adjust="tukey")
+
+leastsquarewfa
+
+leastsquarewfa2 = lsmeans(modelWFA2,
+                      pairwise ~ Condition:Genotype,
+                      adjust="tukey")
+leastsquarewfa2
 ```
 
 ```{r}
@@ -75,6 +112,19 @@ summary(modelColoc2)
 Anova(modelPV2,
       type = "II")
 
+```
+
+```{r}
+leastsquarecoloc = lsmeans(modelColoc2,
+                      "Genotype",
+                      adjust="tukey")
+
+leastsquarecoloc
+
+leastsquarecoloc2 = lsmeans(modelColoc2,
+                      pairwise ~ Condition:Genotype,
+                      adjust="tukey")
+leastsquarecoloc2
 ```
 
 ```{r}
@@ -99,26 +149,35 @@ Image_data3 <- Image_data3 %>%
   mutate(Group = paste(Condition, Genotype, sep = "_"))
 
 # Plot
-ggplot() +
+pv <- ggplot() +
   # Bar chart for group means
-  geom_col(data = summary_df_PV, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.5) +
+  geom_col(data = summary_df_PV, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.4) +
   geom_errorbar(
-  data = summary_df_PV,
-  aes(x = Group, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
-  width = 0.2,
-  color = "black"
-)+
-
+    data = summary_df_PV,
+    aes(x = Group, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+    width = 0.2,
+    color = "black"
+  ) +
+  
   # Jitter for individual points
-  geom_jitter(data = Image_data3, aes(x = Group, y = Green.Puncta.Density, color = Animal),
-              width = 0.2, size = 2, alpha = 0.7) +
+  geom_jitter(data = Image_data3, aes(x = Group, y = Green.Puncta.Density, color = Genotype),
+              width = 0.2, size = 2, alpha = 0.9) +
 
   theme_minimal() +
   xlab(" ") +
   ylab("PV+ Puncta Density") +
-  labs(title = "PV+ puncta count in V1 across \n experimental conditions") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
-  scale_x_discrete(labels = label_map)
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"  # Remove legend
+  ) +
+  scale_x_discrete(labels = label_map) +
+  
+  # Set colors manually
+  scale_fill_manual(values = c("darkblue", "lightblue")) +
+  scale_color_manual(values = c("darkblue", "lightblue"))
+
+ggsave("PV_puncta_density.png", plot = pv,
+       width = 2, height = 4, dpi = 300)
 ```
 
 ```{r}
@@ -135,27 +194,35 @@ summary_df_WFA <- Image_data3 %>%
 Image_data3 <- Image_data3 %>%
   mutate(Group = paste(Condition, Genotype, sep = "_"))
 
-# Plot
-ggplot() +
+wfa <- ggplot() +
   # Bar chart for group means
-  geom_col(data = summary_df_WFA, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.5) +
+  geom_col(data = summary_df_WFA, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.4) +
   geom_errorbar(
-  data = summary_df_WFA,
-  aes(x = Group, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
-  width = 0.2,
-  color = "black"
-)+
-
+    data = summary_df_WFA,
+    aes(x = Group, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+    width = 0.2,
+    color = "black"
+  ) +
+  
   # Jitter for individual points
-  geom_jitter(data = Image_data3, aes(x = Group, y = Red.Punta.Density, color = Animal),
-              width = 0.2, size = 2, alpha = 0.7) +
+  geom_jitter(data = Image_data3, aes(x = Group, y = Red.Punta.Density, color = Genotype),
+              width = 0.2, size = 2, alpha = 0.9) +
 
   theme_minimal() +
   xlab(" ") +
   ylab("WFA+ Puncta Density") +
-  labs(title = "WFA+ puncta count in V1 across \n experimental conditions") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
-  scale_x_discrete(labels = label_map)
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"  # Remove legend
+  ) +
+  scale_x_discrete(labels = label_map) +
+  
+  # Set colors manually
+  scale_fill_manual(values = c("darkblue", "lightblue")) +
+  scale_color_manual(values = c("darkblue", "lightblue"))
+
+ggsave("WFA_puncta_density.png", plot = wfa,
+       width = 2, height = 4, dpi = 300)
 ```
 
 ```{r}
@@ -168,26 +235,35 @@ summary_df_WFA <- Image_data3 %>%
   )
 
 # Plot
-ggplot() +
-  # Bar chart for group means
-  geom_col(data = summary_df_WFA, aes(x = Genotype, y = MeanCount, fill = Genotype), alpha = 0.5) +
-  geom_errorbar(
-  data = summary_df_WFA,
-  aes(x = Genotype, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
-  width = 0.2,
-  color = "black"
-)+
-
-  # Jitter for individual points
-  geom_jitter(data = Image_data3, aes(x = Genotype, y = Red.Punta.Density, color = Animal),
-              width = 0.2, size = 2, alpha = 0.7) +
+p <- ggplot() +
+  geom_col(data = summary_df_WFA,
+           aes(x = Genotype, y = MeanCount, fill = Genotype),
+           alpha = 0.5, width = 0.4, position = position_dodge(width = 0.5)) +  # key change
+  geom_errorbar(data = summary_df_WFA,
+                aes(x = Genotype, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+                width = 0.15,
+                color = "black",
+                position = position_dodge(width = 0.5)) +  # match dodge width
+  geom_jitter(data = Image_data3,
+              aes(x = Genotype, y = Red.Punta.Density, color = Genotype),
+              width = 0.15, size = 2, alpha = 0.7) +
 
   theme_minimal() +
   xlab(" ") +
   ylab("WFA+ Puncta Density") +
-  labs(title = "WFA+ puncta count in V1 across \n experimental conditions") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
-  scale_x_discrete(labels = label_map)
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  ) +
+  scale_x_discrete(labels = label_map, drop = TRUE, expand = c(0.05, 0)) +
+  scale_fill_manual(values = c("darkblue", "lightblue")) +
+  scale_color_manual(values = c("darkblue", "lightblue"))
+
+p
+ggsave("WFA_puncta_genotype_density.png", plot = p,
+       width = 2, height = 4, dpi = 300)
+
+
 ```
 
 ```{r}
@@ -205,7 +281,7 @@ Image_data3 <- Image_data3 %>%
   mutate(Group = paste(Condition, Genotype, sep = "_"))
 
 # Plot
-ggplot() +
+coloc <- ggplot() +
   # Bar chart for group means
   geom_col(data = summary_df_Coloc, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.5) +
   geom_errorbar(
@@ -223,7 +299,104 @@ ggplot() +
   theme_minimal() +
   xlab(" ") +
   ylab("Double+ Puncta Density") +
-  labs(title = "Double+ puncta count in V1 across \n experimental conditions") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
-  scale_x_discrete(labels = label_map)
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")+
+  scale_x_discrete(labels = label_map)+
+  scale_fill_manual(values = c("darkblue", "lightblue")) +
+  scale_color_manual(values = c("darkblue", "lightblue"))
+
+ggsave("coloc_puncta_density.png", plot = coloc,
+       width = 2, height = 4, dpi = 300)
+```
+
+```{r}
+Image_data2 <- Image_data2 |>
+  mutate(
+    coloc_percent = (Colocalized.Puncta.Count)/Green.Puncta.Count,
+    not_coloc_percent = (Green.Puncta.Count-Colocalized.Puncta.Count)/Green.Puncta.Count
+  )
+
+modelpercentcoloc = lm(`coloc_percent` ~ Condition * Genotype,
+           data = Image_data2)
+summary(modelpercentcoloc)
+
+Anova(modelpercentcoloc,
+      type = "II")
+
+leastsquarepercentcoloc = lsmeans(modelpercentcoloc,
+                      "Genotype",
+                      adjust="tukey")
+
+leastsquarepercentcoloc
+
+leastsquarepercentcoloc2 = lsmeans(modelpercentcoloc,
+                      pairwise ~ Condition:Genotype,
+                      adjust="tukey")
+leastsquarepercentcoloc2
+```
+
+```{r}
+
+modelpercentnotcoloc = lm(`not_coloc_percent` ~ Condition * Genotype,
+           data = Image_data2)
+summary(modelpercentnotcoloc)
+
+Anova(modelpercentnotcoloc,
+      type = "II")
+
+leastsquarepercentnotcoloc = lsmeans(modelpercentnotcoloc,
+                      "Genotype",
+                      adjust="tukey")
+
+leastsquarepercentnotcoloc
+
+leastsquarepercentnotcoloc2 = lsmeans(modelpercentnotcoloc,
+                      pairwise ~ Condition:Genotype,
+                      adjust="tukey")
+leastsquarepercentnotcoloc2
+```
+
+```{r}
+summary_df_percentcoloc <- Image_data3 %>%
+  group_by(Condition, Genotype) %>%
+  summarise(
+    MeanCount = mean(coloc_percent, na.rm = TRUE),
+    SEM = sd(coloc_percent, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  ) %>%
+  mutate(Group = paste(Condition, Genotype, sep = "_"))
+
+# Add group label to raw data
+Image_data3 <- Image_data3 %>%
+  mutate(Group = paste(Condition, Genotype, sep = "_"))
+
+# Plot
+percentcoloc <- ggplot() +
+  # Bar chart for group means
+  geom_col(data = summary_df_percentcoloc, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.4) +
+  geom_errorbar(
+    data = summary_df_percentcoloc,
+    aes(x = Group, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+    width = 0.2,
+    color = "black"
+  ) +
+  
+  # Jitter for individual points
+  geom_jitter(data = Image_data3, aes(x = Group, y = coloc_percent, color = Genotype),
+              width = 0.2, size = 2, alpha = 0.9) +
+
+  theme_minimal() +
+  xlab(" ") +
+  ylab("Percent Colocalized Puncta") +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"  # Remove legend
+  ) +
+  scale_x_discrete(labels = label_map) +
+  
+  # Set colors manually
+  scale_fill_manual(values = c("darkblue", "lightblue")) +
+  scale_color_manual(values = c("darkblue", "lightblue"))
+
+ggsave("colocpercent_puncta_density.png", plot = percentcoloc,
+       width = 2, height = 4, dpi = 300)
 ```
