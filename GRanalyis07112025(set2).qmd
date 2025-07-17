@@ -50,8 +50,8 @@ Image_data3 <- Image_data2 |>
     Red.Punta.Density = mean(Red.Punta.Density)*10000,
     Green.Puncta.Density = mean(Green.Puncta.Density)*10000,
     Coloc.Puncta.Density = mean(Coloc.Puncta.Density)*10000,
-    coloc_percent = mean(coloc_percent),
-    not_coloc_percent = mean(not_coloc_percent)
+    #coloc_percent = mean(coloc_percent),
+    #not_coloc_percent = mean(not_coloc_percent)
   )
 ```
 
@@ -66,7 +66,7 @@ Anova(modelPV2,
 
 ```{r}
 leastsquarepv = lsmeans(modelPV2,
-                      "Genotype",
+                      pairwise ~ "Genotype",
                       adjust="tukey")
 
 leastsquarepv
@@ -92,8 +92,14 @@ Anova(modelWFA2,
 
 ```{r}
 leastsquarewfa = lsmeans(modelWFA2,
-                      "Genotype",
+                pairwise ~ "Genotype",
                       adjust="tukey")
+
+leastsquarewfacon = lsmeans(modelWFA2,
+                pairwise ~ "Condition",
+                      adjust="tukey")
+
+leastsquarewfacon
 
 leastsquarewfa
 
@@ -116,7 +122,7 @@ Anova(modelPV2,
 
 ```{r}
 leastsquarecoloc = lsmeans(modelColoc2,
-                      "Genotype",
+                      pairwise ~ "Genotype",
                       adjust="tukey")
 
 leastsquarecoloc
@@ -223,6 +229,8 @@ wfa <- ggplot() +
 
 ggsave("WFA_puncta_density.png", plot = wfa,
        width = 2, height = 4, dpi = 300)
+
+wfa
 ```
 
 ```{r}
@@ -344,7 +352,7 @@ Anova(modelpercentnotcoloc,
       type = "II")
 
 leastsquarepercentnotcoloc = lsmeans(modelpercentnotcoloc,
-                      "Genotype",
+                      pairwise ~ "Genotype",
                       adjust="tukey")
 
 leastsquarepercentnotcoloc
