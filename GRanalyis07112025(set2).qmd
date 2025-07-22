@@ -42,6 +42,8 @@ Image_data2 <- Image_data2 |>
     Coloc.Puncta.Density = 100* (Colocalized.Puncta.Count/roiArea)
     )
 
+Image_data2$Genotype <- factor(Image_data2$Genotype, levels = c("WT", "KO"))
+
 Image_data2$Genotype <- as.factor(Image_data2$Genotype)
 Image_data2$Condition <- as.factor(Image_data2$Condition)
 Image_data3 <- Image_data2 |>
@@ -112,10 +114,10 @@ leastsquarewfa2
 ```{r}
 
 modelColoc2 = lm(`Coloc.Puncta.Density` ~ Condition * Genotype,
-           data = Image_data2)
+           data = Image_data3)
 summary(modelColoc2)
 
-Anova(modelPV2,
+Anova(modelColoc2,
       type = "II")
 
 ```
@@ -141,18 +143,30 @@ t.test(Red.Punta.Density ~ Genotype,
 
 ```{r}
 
+Image_data3$Genotype <- factor(Image_data3$Genotype, levels = c("WT", "KO"))
+Image_data3$Condition <- factor(Image_data3$Condition, levels = c("NR", "MD"))
+
+Image_data3 <- Image_data3 %>%
+  mutate(Group = paste(Genotype, Condition, sep = "_"))
+
+group_levels <- Image_data3 %>%
+  mutate(Group = paste(Genotype, Condition, sep = "_")) %>%
+  distinct(Group, Genotype, Condition) %>%
+  arrange(Genotype, Condition) %>%
+  pull(Group)
+
+group_levels <- unique(group_levels)
+
+Image_data3$Group <- factor(Image_data3$Group, levels = group_levels)
+
 summary_df_PV <- Image_data3 %>%
-  group_by(Condition, Genotype) %>%
+  group_by(Condition, Genotype, Group) %>%
   summarise(
     MeanCount = mean(Green.Puncta.Density, na.rm = TRUE),
     SEM = sd(Green.Puncta.Density, na.rm = TRUE) / sqrt(n()),
     .groups = "drop"
-  ) %>%
-  mutate(Group = paste(Condition, Genotype, sep = "_"))
+  )
 
-# Add group label to raw data
-Image_data3 <- Image_data3 %>%
-  mutate(Group = paste(Condition, Genotype, sep = "_"))
 
 # Plot
 pv <- ggplot() +
@@ -171,7 +185,7 @@ pv <- ggplot() +
 
   theme_minimal() +
   xlab(" ") +
-  ylab("PV+ Puncta Density") +
+  ylab(expression("PV+ Puncta/1000" * mm^2))+
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "none"  # Remove legend
@@ -184,21 +198,34 @@ pv <- ggplot() +
 
 ggsave("PV_puncta_density.png", plot = pv,
        width = 2, height = 4, dpi = 300)
+
+pv
 ```
 
 ```{r}
+Image_data3$Genotype <- factor(Image_data3$Genotype, levels = c("WT", "KO"))
+Image_data3$Condition <- factor(Image_data3$Condition, levels = c("NR", "MD"))
+
+Image_data3 <- Image_data3 %>%
+  mutate(Group = paste(Genotype, Condition, sep = "_"))
+
+group_levels <- Image_data3 %>%
+  mutate(Group = paste(Genotype, Condition, sep = "_")) %>%
+  distinct(Group, Genotype, Condition) %>%
+  arrange(Genotype, Condition) %>%
+  pull(Group)
+
+group_levels <- unique(group_levels)
+
+Image_data3$Group <- factor(Image_data3$Group, levels = group_levels)
+
 summary_df_WFA <- Image_data3 %>%
-  group_by(Condition, Genotype) %>%
+  group_by(Condition, Genotype, Group) %>%
   summarise(
     MeanCount = mean(Red.Punta.Density, na.rm = TRUE),
     SEM = sd(Red.Punta.Density, na.rm = TRUE) / sqrt(n()),
     .groups = "drop"
-  ) %>%
-  mutate(Group = paste(Condition, Genotype, sep = "_"))
-
-# Add group label to raw data
-Image_data3 <- Image_data3 %>%
-  mutate(Group = paste(Condition, Genotype, sep = "_"))
+  )
 
 wfa <- ggplot() +
   # Bar chart for group means
@@ -216,7 +243,7 @@ wfa <- ggplot() +
 
   theme_minimal() +
   xlab(" ") +
-  ylab("WFA+ Puncta Density") +
+  ylab(expression("WFA+ Puncta/1000" * mm^2)) +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "none"  # Remove legend
@@ -258,7 +285,7 @@ p <- ggplot() +
 
   theme_minimal() +
   xlab(" ") +
-  ylab("WFA+ Puncta Density") +
+  ylab(expression("WFA+ Puncta/1000" * mm^2)) +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "none"
@@ -275,18 +302,69 @@ ggsave("WFA_puncta_genotype_density.png", plot = p,
 ```
 
 ```{r}
+summary_df_WFA <- Image_data3 %>%
+  group_by(Condition) %>%
+  summarise(
+    MeanCount = mean(Red.Punta.Density, na.rm = TRUE),
+    SEM = sd(Red.Punta.Density, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  )
+
+# Plot
+q <- ggplot() +
+  geom_col(data = summary_df_WFA,
+           aes(x = Condition, y = MeanCount, fill = Condition),
+           alpha = 0.5, width = 0.4, position = position_dodge(width = 0.5)) +  # key change
+  geom_errorbar(data = summary_df_WFA,
+                aes(x = Condition, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+                width = 0.15,
+                color = "black",
+                position = position_dodge(width = 0.5)) +  # match dodge width
+  geom_jitter(data = Image_data3,
+              aes(x = Condition, y = Red.Punta.Density, color = Condition),
+              width = 0.15, size = 2, alpha = 0.7) +
+
+  theme_minimal() +
+  xlab(" ") +
+  ylab(expression("WFA+ Puncta/1000" * mm^2)) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  ) +
+  scale_x_discrete(labels = label_map, drop = TRUE, expand = c(0.05, 0)) +
+  scale_fill_manual(values = c("darkblue", "lightblue")) +
+  scale_color_manual(values = c("darkblue", "lightblue"))
+
+
+ggsave("WFA_puncta_condition_density.png", plot = q,
+       width = 2, height = 4, dpi = 300)
+q
+```
+
+```{r}
+Image_data3$Genotype <- factor(Image_data3$Genotype, levels = c("WT", "KO"))
+Image_data3$Condition <- factor(Image_data3$Condition, levels = c("NR", "MD"))
+
+Image_data3 <- Image_data3 %>%
+  mutate(Group = paste(Genotype, Condition, sep = "_"))
+
+group_levels <- Image_data3 %>%
+  mutate(Group = paste(Genotype, Condition, sep = "_")) %>%
+  distinct(Group, Genotype, Condition) %>%
+  arrange(Genotype, Condition) %>%
+  pull(Group)
+
+group_levels <- unique(group_levels)
+
+Image_data3$Group <- factor(Image_data3$Group, levels = group_levels)
+
 summary_df_Coloc <- Image_data3 %>%
-  group_by(Condition, Genotype) %>%
+  group_by(Condition, Genotype, Group) %>%
   summarise(
     MeanCount = mean(Coloc.Puncta.Density, na.rm = TRUE),
     SEM = sd(Coloc.Puncta.Density, na.rm = TRUE) / sqrt(n()),
     .groups = "drop"
-  ) %>%
-  mutate(Group = paste(Condition, Genotype, sep = "_"))
-
-# Add group label to raw data
-Image_data3 <- Image_data3 %>%
-  mutate(Group = paste(Condition, Genotype, sep = "_"))
+  )
 
 # Plot
 coloc <- ggplot() +
@@ -306,13 +384,53 @@ coloc <- ggplot() +
 
   theme_minimal() +
   xlab(" ") +
-  ylab("Double+ Puncta Density") +
+  ylab(expression("Double+ Puncta/1000" * mm^2)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")+
   scale_x_discrete(labels = label_map)+
   scale_fill_manual(values = c("darkblue", "lightblue")) +
   scale_color_manual(values = c("darkblue", "lightblue"))
 
 ggsave("coloc_puncta_density.png", plot = coloc,
+       width = 2, height = 4, dpi = 300)
+coloc
+```
+
+```{r}
+summary_df_Coloc <- Image_data3 %>%
+  group_by(Genotype) %>%
+  summarise(
+    MeanCount = mean(Coloc.Puncta.Density, na.rm = TRUE),
+    SEM = sd(Coloc.Puncta.Density, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  )
+
+# Plot
+coloc_geno <- ggplot() +
+  geom_col(data = summary_df_Coloc,
+           aes(x = Genotype, y = MeanCount, fill = Genotype),
+           alpha = 0.5, width = 0.4, position = position_dodge(width = 0.5)) +  # key change
+  geom_errorbar(data = summary_df_Coloc,
+                aes(x = Genotype, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+                width = 0.15,
+                color = "black",
+                position = position_dodge(width = 0.5)) +  # match dodge width
+  geom_jitter(data = Image_data3,
+              aes(x = Genotype, y = Coloc.Puncta.Density, color = Genotype),
+              width = 0.15, size = 2, alpha = 0.7) +
+
+  theme_minimal() +
+  xlab(" ") +
+  ylab(expression("Double+ Puncta/1000" * mm^2)) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  ) +
+  scale_x_discrete(labels = label_map, drop = TRUE, expand = c(0.05, 0)) +
+  scale_fill_manual(values = c("darkblue", "lightblue")) +
+  scale_color_manual(values = c("darkblue", "lightblue"))
+
+coloc_geno
+ggsave("coloc_puncta_genotype_density.png", plot = coloc_geno,
        width = 2, height = 4, dpi = 300)
 ```
 
