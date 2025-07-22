@@ -1,0 +1,221 @@
+---
+title: "FluorescenceIntensity_set2"
+format: html
+---
+
+```{r}
+if(!require(lsmeans)){install.packages("lsmeans")}
+if(!require(multcompView)){install.packages("multcompView")}
+if(!require(dplyr)){install.packages("dplyr")}
+if(!require(rcompanion)){install.packages("rcompanion")}
+if(!require(rcompanion)){install.packages("ggprism")}
+
+library(tidyverse)
+library(stringr)
+library(car)
+library(FSA)
+library(ggpubr)
+library(ggbeeswarm)
+library(ggprism)
+library(ragg)
+
+if(!require(psych)){install.packages("psych")}
+if(!require(FSA)){install.packages("FSA")}
+if(!require(lattice)){install.packages("lattice")}
+if(!require(lsr)){install.packages("lsr")}
+```
+
+```{r}
+
+FluoData = read.csv("DATAFLUO/C2_merged_data.csv")
+
+
+```
+
+```{r}
+#| label: cleaning data, extracting information
+
+FluoData$animal <- stringr::str_extract(
+  FluoData$Label,
+  "AC\\d{4}|(?<!\\d)\\d{6}(?!\\d)"
+)
+
+# Extract sex (M or F) after either _NR_ or _MD_
+FluoData$sex <- stringr::str_extract(FluoData$Label, "(?<=_(NR|MD)_)[MF](?=_)")
+
+FluoData$Condition <- stringr::str_extract(FluoData$Label, "(?<=_)(NR|MD)(?=_[MF]_)")
+
+FluoData$Genotype <- stringr::str_extract(FluoData$Label, "(?<=_)(WT|KO)(?=_)")
+
+FluoData$slice <- str_extract(FluoData$Label, "s\\d+h\\d+")
+# Then keep only the s + digits part
+FluoData$slice <- sub("h\\d+", "", FluoData$slice)
+
+FluoData <- FluoData %>%
+  add_count(animal, name = "animal_coloc_sum")
+
+```
+
+```{r}
+#creates dataframe where intensity is averaged over all images for each animal
+FluoData_Animal <- FluoData %>%
+  group_by(animal, Genotype, Condition) %>%
+  summarise(
+    mean_Mean = mean(Mean, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+
+```{r}
+modelIntensity = lm(`mean_Mean` ~ Condition * Genotype,
+           data = FluoData_Animal)
+summary(modelIntensity)
+
+Anova(modelIntensity,
+      type = "II")
+```
+
+```{r}
+leastsquareIntens = lsmeans(modelIntensity,
+                      pairwise ~ "Condition",
+                      adjust="tukey")
+
+leastsquareIntens
+
+leastsquareIntens3 = lsmeans(modelIntensity,
+                      pairwise ~ "Genotype",
+                      adjust="tukey")
+leastsquareIntens3
+
+
+leastsquareIntens2 = lsmeans(modelIntensity,
+                      pairwise ~ Condition:Genotype,
+                      adjust="tukey")
+leastsquareIntens2
+```
+
+```{r}
+
+FluoData_Animal$Genotype <- factor(Image_data3$Genotype, levels = c("WT", "KO"))
+FluoData_Animal$Condition <- factor(Image_data3$Condition, levels = c("NR", "MD"))
+
+FluoData_Animal <- FluoData_Animal %>%
+  mutate(Group = paste(Genotype, Condition, sep = "_"))
+
+FluoData <- FluoData %>%
+  mutate(Group = paste(Genotype, Condition, sep = "_"))
+
+group_levels_intens <- FluoData_Animal %>%
+  mutate(Group = paste(Genotype, Condition, sep = "_")) %>%
+  distinct(Group, Genotype, Condition) %>%
+  arrange(Genotype, Condition) %>%
+  pull(Group)
+
+group_levels_intens <- unique(group_levels_intens)
+
+FluoData_Animal$Group <- factor(FluoData_Animal$Group, levels = group_levels)
+
+summary_df_Intens <- FluoData_Animal %>%
+  group_by(Condition, Genotype, Group) %>%
+  summarise(
+    MeanCount = mean(`mean_Mean`, na.rm = TRUE),
+    SEM = sd(mean_Mean, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  )
+
+# Plot
+intensity <- ggplot() +
+  # Bar chart for group means
+  geom_col(data = summary_df_Intens, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.4) +
+  geom_errorbar(
+    data = summary_df_Intens,
+    aes(x = Group, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+    width = 0.2,
+    color = "black"
+  ) +
+  
+  # Jitter for individual points
+  geom_jitter(data = FluoData_Animal, aes(x = Group, y = mean_Mean, color = Genotype),
+              width = 0.2, size = 2, alpha = 0.9) +
+  geom_jitter(data = FluoData, aes(x = Group, y = Mean, color = animal),
+              width = 0.2, size = 0.5, alpha = 0.6)+
+
+  theme_minimal() +
+  xlab(" ") +
+  ylab("Mean Intensity")+
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"  # Remove legend
+  ) +
+  scale_x_discrete(labels = label_map) +
+
+ggsave("Intensity_plot.png", plot = intensity,
+       width = 2, height = 4, dpi = 300)
+
+intensity
+```
+
+```{r}
+FluoData_Animal_counts <- FluoData |>
+  group_by(Group) |>
+  summarise(
+    animal_coloc_sum_total = sum(animal_coloc_sum, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+
+```{r}
+FluoData_Animal$Genotype <- factor(Image_data3$Genotype, levels = c("WT", "KO"))
+FluoData_Animal$Condition <- factor(Image_data3$Condition, levels = c("NR", "MD"))
+
+FluoData_Animal <- FluoData_Animal %>%
+  mutate(Group = paste(Genotype, Condition, sep = "_"))
+
+FluoData <- FluoData %>%
+  mutate(Group = paste(Genotype, Condition, sep = "_"))
+
+# Get unique group levels
+group_levels_intens <- FluoData_Animal %>%
+  distinct(Group, Genotype, Condition) %>%
+  arrange(Genotype, Condition) %>%
+  pull(Group) %>%
+  unique()
+
+# Apply proper levels
+FluoData_Animal$Group <- factor(FluoData_Animal$Group, levels = group_levels_intens)
+
+# Summary stats
+summary_df_Intens <- FluoData_Animal %>%
+  group_by(Condition, Genotype, Group) %>%
+  summarise(
+    MeanCount = mean(mean_Mean, na.rm = TRUE),
+    SEM = sd(mean_Mean, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  )
+
+# Plot
+intensity <- ggplot() +
+  geom_col(data = summary_df_Intens, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.4) +
+  geom_errorbar(
+    data = summary_df_Intens,
+    aes(x = Group, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+    width = 0.2, color = "black"
+  ) +
+  geom_jitter(data = FluoData_Animal, aes(x = Group, y = mean_Mean, color = Genotype),
+              width = 0.2, size = 2, alpha = 0.9) +
+  geom_jitter(data = FluoData, aes(x = Group, y = Mean, color = animal),
+              width = 0.2, size = 0.5, alpha = 0.6) +
+  theme_minimal() +
+  xlab(" ") +
+  ylab("Mean Intensity") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom") +
+  scale_x_discrete(labels = label_map)
+
+# Save
+ggsave("Intensity_plot.png", plot = intensity, width = 2, height = 4, dpi = 300)
+
+# Show
+intensity
+
+```
