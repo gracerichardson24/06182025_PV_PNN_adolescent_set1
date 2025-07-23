@@ -165,8 +165,8 @@ FluoData_Animal_counts <- FluoData |>
 ```
 
 ```{r}
-FluoData_Animal$Genotype <- factor(Image_data3$Genotype, levels = c("WT", "KO"))
-FluoData_Animal$Condition <- factor(Image_data3$Condition, levels = c("NR", "MD"))
+FluoData_Animal$Genotype <- factor(FluoData_Animal$Genotype, levels = c("WT", "KO"))
+FluoData_Animal$Condition <- factor(FluoData_Animal$Condition, levels = c("NR", "MD"))
 
 FluoData_Animal <- FluoData_Animal %>%
   mutate(Group = paste(Genotype, Condition, sep = "_"))
@@ -219,3 +219,99 @@ ggsave("Intensity_plot.png", plot = intensity, width = 2, height = 4, dpi = 300)
 intensity
 
 ```
+
+# Integrated Density Stats + Plot (quantifying per cell WFA amount)
+
+```{r}
+#creates dataframe where intensity is averaged over all images for each animal
+FluoData_Animal_IntDen <- FluoData %>%
+  group_by(animal, Genotype, Condition) %>%
+  summarise(
+    mean_IntDen = mean(IntDen, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+
+```{r}
+modelIntensityIntDen = lm(`mean_IntDen` ~ Condition * Genotype,
+           data = FluoData_Animal_IntDen)
+summary(modelIntensityIntDen)
+
+Anova(modelIntensityIntDen,
+      type = "II")
+```
+
+```{r}
+leastsquareIntensIntDen = lsmeans(modelIntensityIntDen,
+                      pairwise ~ "Condition",
+                      adjust="tukey")
+
+leastsquareIntensIntDen
+
+leastsquareIntens4 = lsmeans(modelIntensityIntDen,
+                      pairwise ~ "Genotype",
+                      adjust="tukey")
+leastsquareIntens4
+
+
+leastsquareIntens3 = lsmeans(modelIntensityIntDen,
+                      pairwise ~ Condition:Genotype,
+                      adjust="tukey")
+leastsquareIntens3
+```
+
+```{r}
+FluoData_Animal_IntDen$Genotype <- factor(FluoData_Animal_IntDen$Genotype, levels = c("WT", "KO"))
+FluoData_Animal_IntDen$Condition <- factor(FluoData_Animal_IntDen$Condition, levels = c("NR", "MD"))
+
+FluoData_Animal_IntDen <- FluoData_Animal_IntDen %>%
+  mutate(Group = paste(Genotype, Condition, sep = "_"))
+
+FluoData <- FluoData %>%
+  mutate(Group = paste(Genotype, Condition, sep = "_"))
+
+# Get unique group levels
+group_levels_intensIntDen <- FluoData_Animal_IntDen %>%
+  distinct(Group, Genotype, Condition) %>%
+  arrange(Genotype, Condition) %>%
+  pull(Group) %>%
+  unique()
+
+# Apply proper levels
+FluoData_Animal_IntDen$Group <- factor(FluoData_Animal_IntDen$Group, levels = group_levels_intensIntDen)
+
+# Summary stats
+summary_df_IntensIntDen <- FluoData_Animal_IntDen %>%
+  group_by(Condition, Genotype, Group) %>%
+  summarise(
+    MeanCount = mean(mean_IntDen, na.rm = TRUE),
+    SEM = sd(mean_IntDen, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  )
+
+# Plot
+Int_Den_plot <- ggplot() +
+  geom_col(data = summary_df_IntensIntDen, aes(x = Group, y = MeanCount, fill = Genotype), alpha = 0.4) +
+  geom_errorbar(
+    data = summary_df_IntensIntDen,
+    aes(x = Group, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+    width = 0.2, color = "black"
+  ) +
+  geom_jitter(data = FluoData_Animal_IntDen, aes(x = Group, y = mean_IntDen, color = Genotype),
+              width = 0.2, size = 2, alpha = 0.5) +
+  geom_jitter(data = FluoData, aes(x = Group, y = IntDen, color = animal),
+              width = 0.2, size = 0.5, alpha = 0.6) +
+  theme_minimal() +
+  xlab(" ") +
+  ylab("Integrated Density") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom") +
+  scale_x_discrete(labels = label_map)
+
+# Save
+ggsave("Intensity_plot_Intden.png", plot = Int_Den_plot, width = 2, height = 4, dpi = 300)
+
+# Show
+Int_Den_plot
+```
+
