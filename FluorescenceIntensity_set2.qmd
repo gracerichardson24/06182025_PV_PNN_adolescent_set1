@@ -25,12 +25,6 @@ if(!require(lattice)){install.packages("lattice")}
 if(!require(lsr)){install.packages("lsr")}
 ```
 
-```{r}
-
-FluoData = read.csv("DATAFLUO/C2_merged_data.csv")
-
-
-```
 
 ```{r}
 #| label: cleaning data, extracting information
