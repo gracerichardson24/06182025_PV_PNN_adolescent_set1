@@ -196,18 +196,18 @@ intensity <- ggplot() +
     width = 0.2, color = "black"
   ) +
   geom_jitter(data = FluoData_Animal, aes(x = Group, y = mean_Mean, color = Genotype),
-              width = 0.2, size = 2, alpha = 0.9) +
-  geom_jitter(data = FluoData, aes(x = Group, y = Mean, color = animal),
-              width = 0.2, size = 0.5, alpha = 0.6) +
+              width = 0.2, size = 2, alpha = 1) +
+  geom_jitter(data = FluoData, aes(x = Group, y = Mean, color = Genotype),
+              width = 0.2, size = 0.5, alpha = 0.3) +
   theme_minimal() +
   xlab(" ") +
-  ylab("Mean Intensity") +
+  ylab("Mean Intensity (Total WFA Intensity)") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        legend.position = "bottom") +
+        legend.position = "hidden") +
   scale_x_discrete(labels = label_map)
 
 # Save
-ggsave("Intensity_plot.png", plot = intensity, width = 2, height = 4, dpi = 300)
+ggsave("Intensity_plot.png", plot = intensity, width = 6, height = 4, dpi = 300)
 
 # Show
 intensity
@@ -292,20 +292,61 @@ Int_Den_plot <- ggplot() +
     width = 0.2, color = "black"
   ) +
   geom_jitter(data = FluoData_Animal_IntDen, aes(x = Group, y = mean_IntDen, color = Genotype),
-              width = 0.2, size = 2, alpha = 0.5) +
-  geom_jitter(data = FluoData, aes(x = Group, y = IntDen, color = animal),
-              width = 0.2, size = 0.5, alpha = 0.6) +
+              width = 0.2, size = 2, alpha = 1) +
+  geom_jitter(data = FluoData, aes(x = Group, y = IntDen, color = Genotype),
+              width = 0.2, size = 0.5, alpha = 0.3) +
   theme_minimal() +
   xlab(" ") +
-  ylab("Integrated Density") +
+  ylab("Integrated Density (Per Cell WFA Intensity)") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        legend.position = "bottom") +
+        legend.position = "hidden") +
   scale_x_discrete(labels = label_map)
 
 # Save
-ggsave("Intensity_plot_Intden.png", plot = Int_Den_plot, width = 2, height = 4, dpi = 300)
+ggsave("Intensity_plot_Intden.png", plot = Int_Den_plot, width = 6, height = 4, dpi = 300)
 
 # Show
 Int_Den_plot
+```
+
+```{r}
+summary_df_IntdenCond <- FluoData %>%
+  group_by(Condition) %>%
+  summarise(
+    MeanCount = mean(IntDen, na.rm = TRUE),
+    SEM = sd(IntDen, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  )
+
+# Plot
+Condition_plot <- ggplot() +
+  geom_col(data = summary_df_IntdenCond,
+           aes(x = Condition, y = MeanCount, fill = Condition),
+           alpha = 0.5, width = 0.4, position = position_dodge(width = 0.5)) +  # key change
+  geom_errorbar(data = summary_df_IntdenCond,
+                aes(x = Condition, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+                width = 0.15,
+                color = "black",
+                position = position_dodge(width = 0.5)) +  # match dodge width
+  geom_jitter(data = FluoData,
+              aes(x = Condition, y = IntDen, color = Condition),
+              width = 0.15, size = 0.5, alpha = 0.3) +
+  geom_jitter(data = FluoData_Animal_IntDen,
+              aes(x = Condition, y = mean_IntDen, color = Condition),
+              width = 0.15, size = 2, alpha = 1) +
+
+  theme_minimal() +
+  xlab(" ") +
+  ylab(expression("Integrated Density")) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  ) +
+  scale_x_discrete(labels = label_map, drop = TRUE, expand = c(0.05, 0))
+
+
+ggsave("Condition_plot_intden.png", plot = Condition_plot,
+       width = 4, height = 4, dpi = 300)
+Condition_plot
 ```
 
