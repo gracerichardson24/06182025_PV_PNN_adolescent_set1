@@ -142,6 +142,8 @@ t.test(Red.Punta.Density ~ Genotype,
 ```
 
 ```{r}
+my_colors <- c("WT" = "dodgerblue",
+               "KO" = "firebrick1")
 
 Image_data3$Genotype <- factor(Image_data3$Genotype, levels = c("WT", "KO"))
 Image_data3$Condition <- factor(Image_data3$Condition, levels = c("NR", "MD"))
@@ -193,8 +195,8 @@ pv <- ggplot() +
   scale_x_discrete(labels = label_map) +
   
   # Set colors manually
-  scale_fill_manual(values = c("darkblue", "lightblue")) +
-  scale_color_manual(values = c("darkblue", "lightblue"))
+  scale_colour_manual(values = my_colors) +
+    scale_fill_manual(values = my_colors)
 
 ggsave("PV_puncta_density.png", plot = pv,
        width = 2, height = 4, dpi = 300)
@@ -251,8 +253,8 @@ wfa <- ggplot() +
   scale_x_discrete(labels = label_map) +
   
   # Set colors manually
-  scale_fill_manual(values = c("darkblue", "lightblue")) +
-  scale_color_manual(values = c("darkblue", "lightblue"))
+  scale_colour_manual(values = my_colors) +
+    scale_fill_manual(values = my_colors)
 
 ggsave("WFA_puncta_density.png", plot = wfa,
        width = 2, height = 4, dpi = 300)
@@ -291,8 +293,8 @@ p <- ggplot() +
     legend.position = "none"
   ) +
   scale_x_discrete(labels = label_map, drop = TRUE, expand = c(0.05, 0)) +
-  scale_fill_manual(values = c("darkblue", "lightblue")) +
-  scale_color_manual(values = c("darkblue", "lightblue"))
+  scale_colour_manual(values = my_colors) +
+    scale_fill_manual(values = my_colors)
 
 p
 ggsave("WFA_puncta_genotype_density.png", plot = p,
@@ -332,8 +334,8 @@ q <- ggplot() +
     legend.position = "none"
   ) +
   scale_x_discrete(labels = label_map, drop = TRUE, expand = c(0.05, 0)) +
-  scale_fill_manual(values = c("darkblue", "lightblue")) +
-  scale_color_manual(values = c("darkblue", "lightblue"))
+  scale_colour_manual(values = my_colors) +
+    scale_fill_manual(values = my_colors)
 
 
 ggsave("WFA_puncta_condition_density.png", plot = q,
@@ -387,8 +389,8 @@ coloc <- ggplot() +
   ylab(expression("Double+ Puncta/1000" * mm^2)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")+
   scale_x_discrete(labels = label_map)+
-  scale_fill_manual(values = c("darkblue", "lightblue")) +
-  scale_color_manual(values = c("darkblue", "lightblue"))
+  scale_colour_manual(values = my_colors) +
+    scale_fill_manual(values = my_colors)
 
 ggsave("coloc_puncta_density.png", plot = coloc,
        width = 2, height = 4, dpi = 300)
@@ -426,8 +428,8 @@ coloc_geno <- ggplot() +
     legend.position = "none"
   ) +
   scale_x_discrete(labels = label_map, drop = TRUE, expand = c(0.05, 0)) +
-  scale_fill_manual(values = c("darkblue", "lightblue")) +
-  scale_color_manual(values = c("darkblue", "lightblue"))
+  scale_colour_manual(values = my_colors) +
+    scale_fill_manual(values = my_colors)
 
 coloc_geno
 ggsave("coloc_puncta_genotype_density.png", plot = coloc_geno,
@@ -520,8 +522,8 @@ percentcoloc <- ggplot() +
   scale_x_discrete(labels = label_map) +
   
   # Set colors manually
-  scale_fill_manual(values = c("darkblue", "lightblue")) +
-  scale_color_manual(values = c("darkblue", "lightblue"))
+  scale_colour_manual(values = my_colors) +
+    scale_fill_manual(values = my_colors)
 
 ggsave("colocpercent_puncta_density.png", plot = percentcoloc,
        width = 2, height = 4, dpi = 300)

@@ -25,7 +25,6 @@ if(!require(lattice)){install.packages("lattice")}
 if(!require(lsr)){install.packages("lsr")}
 ```
 
-
 ```{r}
 #| label: cleaning data, extracting information
 
@@ -349,4 +348,3 @@ ggsave("Condition_plot_intden.png", plot = Condition_plot,
        width = 4, height = 4, dpi = 300)
 Condition_plot
 ```
-
