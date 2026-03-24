@@ -101,13 +101,13 @@ leastsquarewfacon = lsmeans(modelWFA2,
                 pairwise ~ "Condition",
                       adjust="tukey")
 
-leastsquarewfacon
-
-leastsquarewfa
 
 leastsquarewfa2 = lsmeans(modelWFA2,
                       pairwise ~ Condition:Genotype,
                       adjust="tukey")
+
+leastsquarewfa
+leastsquarewfacon
 leastsquarewfa2
 ```
 
@@ -205,6 +205,88 @@ pv
 ```
 
 ```{r}
+my_colors <- c("WT" = "dodgerblue",
+               "KO" = "firebrick1")
+summary_df_PV <- Image_data3 %>%
+  group_by(Genotype) %>%
+  summarise(
+    MeanCount = mean(Green.Puncta.Density, na.rm = TRUE),
+    SEM = sd(Green.Puncta.Density, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  )
+
+# Plot
+pvgenplot <- ggplot() +
+  geom_col(data = summary_df_PV,
+           aes(x = Genotype, y = MeanCount, fill = Genotype),
+           alpha = 0.5, width = 0.4, position = position_dodge(width = 0.5)) +  # key change
+  geom_errorbar(data = summary_df_PV,
+                aes(x = Genotype, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+                width = 0.15,
+                color = "black",
+                position = position_dodge(width = 0.5)) +  # match dodge width
+  geom_jitter(data = Image_data3,
+              aes(x = Genotype, y = Green.Puncta.Density, color = Genotype),
+              width = 0.15, size = 2, alpha = 0.7) +
+
+  theme_minimal() +
+  xlab(" ") +
+  ylab(expression("PV+ Puncta/1000" * mm^2)) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  ) +
+  scale_x_discrete(labels = label_map, drop = TRUE, expand = c(0.05, 0)) +
+  scale_colour_manual(values = my_colors) +
+    scale_fill_manual(values = my_colors)
+
+pvgenplot
+ggsave("PV_puncta_genotype_density.png", plot = pvgenplot,
+       width = 2, height = 4, dpi = 300)
+```
+
+```{r}
+my_colors <- c("NR" = "chartreuse3",
+               "MD" = "yellow")
+summary_df_PV <- Image_data3 %>%
+  group_by(Condition) %>%
+  summarise(
+    MeanCount = mean(Green.Puncta.Density, na.rm = TRUE),
+    SEM = sd(Green.Puncta.Density, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  )
+
+# Plot
+pvconplot <- ggplot() +
+  geom_col(data = summary_df_PV,
+           aes(x = Condition, y = MeanCount, fill = Condition),
+           alpha = 0.5, width = 0.4, position = position_dodge(width = 0.5)) +  # key change
+  geom_errorbar(data = summary_df_PV,
+                aes(x = Condition, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+                width = 0.15,
+                color = "black",
+                position = position_dodge(width = 0.5)) +  # match dodge width
+  geom_jitter(data = Image_data3,
+              aes(x = Condition, y = Green.Puncta.Density, color = Condition),
+              width = 0.15, size = 2, alpha = 0.7) +
+
+  theme_minimal() +
+  xlab(" ") +
+  ylab(expression("PV+ Puncta/1000" * mm^2)) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  ) +
+  scale_x_discrete(labels = label_map, drop = TRUE, expand = c(0.05, 0)) +
+  scale_colour_manual(values = my_colors) +
+    scale_fill_manual(values = my_colors)
+
+pvconplot
+ggsave("PV_puncta_condition_density.png", plot = pvconplot,
+       width = 2, height = 4, dpi = 300)
+```
+
+```{r}
 Image_data3$Genotype <- factor(Image_data3$Genotype, levels = c("WT", "KO"))
 Image_data3$Condition <- factor(Image_data3$Condition, levels = c("NR", "MD"))
 
@@ -263,6 +345,9 @@ wfa
 ```
 
 ```{r}
+my_colors <- c("NR" = "chartreuse3",
+               "MD" = "yellow")
+
 summary_df_WFA <- Image_data3 %>%
   group_by(Genotype) %>%
   summarise(
@@ -304,6 +389,10 @@ ggsave("WFA_puncta_genotype_density.png", plot = p,
 ```
 
 ```{r}
+
+my_colors <- c("NR" = "chartreuse3",
+               "MD" = "yellow")
+
 summary_df_WFA <- Image_data3 %>%
   group_by(Condition) %>%
   summarise(
@@ -344,6 +433,9 @@ q
 ```
 
 ```{r}
+my_colors <- c("WT" = "dodgerblue",
+               "KO" = "firebrick1")
+
 Image_data3$Genotype <- factor(Image_data3$Genotype, levels = c("WT", "KO"))
 Image_data3$Condition <- factor(Image_data3$Condition, levels = c("NR", "MD"))
 
@@ -386,7 +478,7 @@ coloc <- ggplot() +
 
   theme_minimal() +
   xlab(" ") +
-  ylab(expression("Double+ Puncta/1000" * mm^2)) +
+  ylab(expression("PV+/WFA+ cells/1000" * mm^2)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")+
   scale_x_discrete(labels = label_map)+
   scale_colour_manual(values = my_colors) +
@@ -422,7 +514,7 @@ coloc_geno <- ggplot() +
 
   theme_minimal() +
   xlab(" ") +
-  ylab(expression("Double+ Puncta/1000" * mm^2)) +
+  ylab(expression("PV+/WFA+ cells/1000" * mm^2)) +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "none"
@@ -433,6 +525,47 @@ coloc_geno <- ggplot() +
 
 coloc_geno
 ggsave("coloc_puncta_genotype_density.png", plot = coloc_geno,
+       width = 2, height = 4, dpi = 300)
+```
+
+```{r}
+my_colors <- c("NR" = "chartreuse3",
+               "MD" = "yellow")
+summary_df_Coloc <- Image_data3 %>%
+  group_by(Condition) %>%
+  summarise(
+    MeanCount = mean(Coloc.Puncta.Density, na.rm = TRUE),
+    SEM = sd(Coloc.Puncta.Density, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  )
+
+# Plot
+coloc_con <- ggplot() +
+  geom_col(data = summary_df_Coloc,
+           aes(x = Condition, y = MeanCount, fill = Condition),
+           alpha = 0.5, width = 0.4, position = position_dodge(width = 0.5)) +  # key change
+  geom_errorbar(data = summary_df_Coloc,
+                aes(x = Condition, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+                width = 0.15,
+                color = "black",
+                position = position_dodge(width = 0.5)) +  # match dodge width
+  geom_jitter(data = Image_data3,
+              aes(x = Condition, y = Coloc.Puncta.Density, color = Condition),
+              width = 0.15, size = 2, alpha = 0.7) +
+
+  theme_minimal() +
+  xlab(" ") +
+  ylab(expression("PV+/WFA+ cells/1000" * mm^2)) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  ) +
+  scale_x_discrete(labels = label_map, drop = TRUE, expand = c(0.05, 0)) +
+  scale_colour_manual(values = my_colors) +
+    scale_fill_manual(values = my_colors)
+
+coloc_con
+ggsave("coloc_puncta_condition_density.png", plot = coloc_con,
        width = 2, height = 4, dpi = 300)
 ```
 
@@ -484,6 +617,10 @@ leastsquarepercentnotcoloc2
 ```
 
 ```{r}
+
+my_colors <- c("WT" = "dodgerblue",
+               "KO" = "firebrick1")
+
 summary_df_percentcoloc <- Image_data3 %>%
   group_by(Condition, Genotype) %>%
   summarise(
