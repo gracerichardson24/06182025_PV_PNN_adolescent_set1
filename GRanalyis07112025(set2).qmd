@@ -187,7 +187,7 @@ pv <- ggplot() +
 
   theme_minimal() +
   xlab(" ") +
-  ylab(expression("PV+ Puncta/1000" * mm^2))+
+  ylab(expression("PV+ Cells/1000" * mm^2))+
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "none"  # Remove legend
@@ -231,7 +231,7 @@ pvgenplot <- ggplot() +
 
   theme_minimal() +
   xlab(" ") +
-  ylab(expression("PV+ Puncta/1000" * mm^2)) +
+  ylab(expression("PV+ Cells/1000" * mm^2)) +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "none"
@@ -272,7 +272,7 @@ pvconplot <- ggplot() +
 
   theme_minimal() +
   xlab(" ") +
-  ylab(expression("PV+ Puncta/1000" * mm^2)) +
+  ylab(expression("PV+ Cells/1000" * mm^2)) +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "none"
@@ -287,6 +287,8 @@ ggsave("PV_puncta_condition_density.png", plot = pvconplot,
 ```
 
 ```{r}
+my_colors <- c("WT" = "dodgerblue",
+               "KO" = "firebrick1")
 Image_data3$Genotype <- factor(Image_data3$Genotype, levels = c("WT", "KO"))
 Image_data3$Condition <- factor(Image_data3$Condition, levels = c("NR", "MD"))
 
@@ -327,7 +329,7 @@ wfa <- ggplot() +
 
   theme_minimal() +
   xlab(" ") +
-  ylab(expression("WFA+ Puncta/1000" * mm^2)) +
+  ylab(expression("WFA+ Cells/1000" * mm^2)) +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "none"  # Remove legend
@@ -347,6 +349,9 @@ wfa
 ```{r}
 my_colors <- c("NR" = "chartreuse3",
                "MD" = "yellow")
+
+my_colors <- c("WT" = "dodgerblue",
+               "KO" = "firebrick1")
 
 summary_df_WFA <- Image_data3 %>%
   group_by(Genotype) %>%
@@ -372,7 +377,7 @@ p <- ggplot() +
 
   theme_minimal() +
   xlab(" ") +
-  ylab(expression("WFA+ Puncta/1000" * mm^2)) +
+  ylab(expression("WFA+ Cells/1000" * mm^2)) +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "none"
@@ -417,7 +422,7 @@ q <- ggplot() +
 
   theme_minimal() +
   xlab(" ") +
-  ylab(expression("WFA+ Puncta/1000" * mm^2)) +
+  ylab(expression("WFA+ Cells/1000" * mm^2)) +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "none"
@@ -651,7 +656,7 @@ percentcoloc <- ggplot() +
 
   theme_minimal() +
   xlab(" ") +
-  ylab("Percent Colocalized Puncta") +
+  ylab("Percent Colocalized Cells") +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "none"  # Remove legend
