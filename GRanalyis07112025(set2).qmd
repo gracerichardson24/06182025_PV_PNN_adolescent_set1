@@ -670,3 +670,109 @@ percentcoloc <- ggplot() +
 ggsave("colocpercent_puncta_density.png", plot = percentcoloc,
        width = 2, height = 4, dpi = 300)
 ```
+
+```{r}
+
+Percent_data <- Image_data2 |>
+  group_by(Animal, Genotype, Condition) |>
+  summarise(
+    percent_coloc = (mean(coloc_percent)*100)
+  )
+my_colors <- c("WT" = "dodgerblue",
+               "KO" = "firebrick1")
+
+summary_df_percent <- Percent_data %>%
+  group_by(Genotype) %>%
+  summarise(
+    MeanCount = mean(percent_coloc, na.rm = TRUE),
+    SEM = sd(percent_coloc, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  )
+
+# Plot
+colocpercentplotgt <- ggplot() +
+  geom_col(data = summary_df_percent,
+           aes(x = Genotype, y = MeanCount, fill = Genotype),
+           alpha = 0.5, width = 0.4, position = position_dodge(width = 0.5)) +  # key change
+  geom_errorbar(data = summary_df_percent,
+                aes(x = Genotype, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+                width = 0.15,
+                color = "black",
+                position = position_dodge(width = 0.5)) +  # match dodge width
+  geom_jitter(data = Percent_data,
+              aes(x = Genotype, y = percent_coloc, color = Genotype),
+              width = 0.15, size = 2, alpha = 0.7) +
+
+  theme_minimal() +
+  xlab(" ") +
+  ylab(expression("%(PV+/PNN+)/PV+")) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  ) +
+  scale_x_discrete(labels = label_map, drop = TRUE, expand = c(0.05, 0)) +
+  scale_colour_manual(values = my_colors) +
+    scale_fill_manual(values = my_colors)
+
+colocpercentplotgt
+ggsave("colocpercentplotgty.png", plot = colocpercentplotgt,
+       width = 2, height = 4, dpi = 300)
+```
+
+```{r}
+Image_data2$Condition <- factor(Image_data2$Condition, levels = c("NR", "MD"))
+
+Percent_data <- Image_data2 |>
+  group_by(Animal, Genotype, Condition) |>
+  summarise(
+    percent_coloc = (mean(coloc_percent)*100)
+  )
+my_colors <- c("NR" = "chartreuse3",
+               "MD" = "yellow")
+
+summary_df_percent_con <- Percent_data %>%
+  group_by(Condition) %>%
+  summarise(
+    MeanCount = mean(percent_coloc, na.rm = TRUE),
+    SEM = sd(percent_coloc, na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  )
+
+# Plot
+colocpercentplotcon <- ggplot() +
+  geom_col(data = summary_df_percent_con,
+           aes(x = Condition, y = MeanCount, fill = Condition),
+           alpha = 0.5, width = 0.4, position = position_dodge(width = 0.5)) +  # key change
+  geom_errorbar(data = summary_df_percent_con,
+                aes(x = Condition, y = MeanCount, ymin = MeanCount - SEM, ymax = MeanCount + SEM),
+                width = 0.15,
+                color = "black",
+                position = position_dodge(width = 0.5)) +  # match dodge width
+  geom_jitter(data = Percent_data,
+              aes(x = Condition, y = percent_coloc, color = Condition),
+              width = 0.15, size = 2, alpha = 0.7) +
+
+  theme_minimal() +
+  xlab(" ") +
+  ylab(expression("%(PV+/PNN+)/PV+")) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  ) +
+  scale_x_discrete(labels = label_map, drop = TRUE, expand = c(0.05, 0)) +
+  scale_colour_manual(values = my_colors) +
+    scale_fill_manual(values = my_colors)
+
+colocpercentplotcon
+ggsave("colocpercentplotcon.png", plot = colocpercentplotcon,
+       width = 2, height = 4, dpi = 300)
+```
+
+```{r}
+modelper = lm(`Green.Puncta.Density` ~ Condition * Genotype,
+           data = Image_data3)
+summary(modelPV2)
+
+Anova(modelPV2,
+      type = "II")
+```
